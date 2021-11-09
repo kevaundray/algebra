@@ -90,12 +90,15 @@ impl<P: Parameters> GroupAffine<P> {
         let numerator = P::BaseField::one() - y2;
         let denominator = P::COEFF_A - (y2 * P::COEFF_D);
 
-        let x2 = denominator.inverse().map(|denom| denom * &numerator);
-        x2.and_then(|x2| x2.sqrt()).map(|x| {
-            let negx = -x;
-            let x = if (x < negx) ^ greatest { x } else { negx };
-            Self::new(x, y)
-        })
+        denominator
+            .inverse()
+            .map(|denom| denom * &numerator)
+            .and_then(|x2| x2.sqrt())
+            .map(|x| {
+                let negx = -x;
+                let x = if (x < negx) ^ greatest { x } else { negx };
+                Self::new(x, y)
+            })
     }
 
     /// Checks that the current point is on the elliptic curve.
