@@ -203,7 +203,7 @@ pub trait CanonicalSerializeHashExt: CanonicalSerialize {
     fn hash_uncompressed<H: Digest>(&self) -> GenericArray<u8, <H as OutputSizeUser>::OutputSize> {
         let mut hasher = H::new();
         self.serialize_uncompressed(HashMarshaller(&mut hasher))
-            .expect("HashMarshaller::flush should be infaillible!");
+            .expect("HashMarshaller::flush should be infallible!");
         hasher.finalize()
     }
 }
@@ -223,4 +223,30 @@ pub fn buffer_bit_byte_size(modulus_bits: usize) -> (usize, usize) {
 #[inline]
 pub const fn buffer_byte_size(modulus_bits: usize) -> usize {
     (modulus_bits + 7) / 8
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::buffer_byte_size;
+
+    #[test]
+    fn test_buffer_byte_size_smoke() {
+        // 0 bits will return 0 bytes.
+        // This is an edge case which should not arise in practice.
+        // However, we ensure to document it.
+        assert_eq!(buffer_byte_size(0), 0);
+
+        const ITERATIONS: usize = 100usize;
+        for i in 1..ITERATIONS {
+            // Checking that every multiple of 8
+            // will give us the correct byte size
+            assert_eq!(buffer_byte_size(i * 8), i);
+
+            // One less than a multiple of 8 should also
+            // return the same byte size as the multiple
+            // of 8. For example, 8 bits can be represented in
+            // one byte and so can 7 bits.
+            assert_eq!(buffer_byte_size((i * 8) - 1), i);
+        }
+    }
 }
