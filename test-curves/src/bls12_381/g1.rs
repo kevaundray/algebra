@@ -75,6 +75,7 @@ pub const G1_GENERATOR_Y: Fq = MontFp!("1339506544944476473020471379941921221584
 mod test {
     use super::*;
     use ark_ec::CurveGroup;
+    use ark_serialize::*;
     use ark_std::UniformRand;
 
     #[test]
@@ -93,5 +94,27 @@ mod test {
 
         let g_s_affine_fast = G1Projective::normalize_batch(&g_s);
         assert_eq!(g_s_affine_naive.as_ref(), g_s_affine_fast.as_slice());
+    }
+
+    #[test]
+    fn non_canonical_identity_point() {
+        // Non-canonical encoding of the identity point
+        let non_canonical_hex = "c01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+        let non_canonical_bytes = hex::decode(non_canonical_hex).unwrap();
+        assert_eq!(non_canonical_bytes.len(), 48);
+
+        let affine_point: G1Affine =
+            CanonicalDeserialize::deserialize_compressed(&non_canonical_bytes[..]).unwrap();
+
+        let mut canonical_bytes = ark_std::vec![0u8; 48];
+        affine_point
+            .serialize_compressed(&mut canonical_bytes[..])
+            .unwrap();
+
+        assert_eq!(
+        non_canonical_bytes, canonical_bytes,
+        "if a point has been successfully deserialized, then it should equal the serialized point. ie serialization is canonical."
+    )
     }
 }
